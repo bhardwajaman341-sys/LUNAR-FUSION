@@ -14,8 +14,25 @@ const PORT = process.env.PORT || 5000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Middleware
-app.use(cors());
+// Configure CORS for production deployment
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. mobile apps, curl) or matched origins
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS policy violation: Origin not allowed'));
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -36,10 +53,15 @@ app.get('/api/health', (req, res) => {
 
 // Start Server after attempting DB connection
 const startServer = async () => {
-  await connectDB();
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to connect to MongoDB:', error.message);
+    process.exit(1);
+  }
 };
 
 startServer();

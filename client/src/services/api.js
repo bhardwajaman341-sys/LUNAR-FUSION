@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-// Node.js Express Backend URL
-const API_URL = 'http://localhost:5000/api';
+// Dynamically use Vercel environment variable in production, falling back to localhost for local development
+const API_URL = import.meta.env.VITE_API_BASE_URL 
+  ? `${import.meta.env.VITE_API_BASE_URL}/api`
+  : 'http://localhost:5000/api';
 
 // Create a configured Axios instance
 const apiClient = axios.create({
@@ -10,7 +12,6 @@ const apiClient = axios.create({
 
 /**
  * Attaches the Clerk JWT token to requests dynamically.
- * Call this function once in your app or pass window.Clerk directly.
  */
 apiClient.interceptors.request.use(
   async (config) => {
